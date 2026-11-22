@@ -64,11 +64,11 @@ import com.example.presentation.components.CyberPanel
 import com.example.presentation.components.CyberSectionHeader
 import com.example.presentation.components.RiskBadge
 import com.example.presentation.components.riskColors
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.presentation.viewmodel.WifiToolsUiState
 import com.example.security.EncryptionKnowledgeBase
 import com.example.ui.theme.CrimsonBorder
 import com.example.ui.theme.CrimsonBorderBright
-import com.example.ui.theme.CrimsonPanel
 import com.example.ui.theme.CrimsonPanelHigh
 import com.example.ui.theme.CrimsonPanelHighest
 import com.example.ui.theme.CrimsonTextMuted
@@ -93,8 +93,9 @@ fun SecurityScreen(
     onGenerateReport: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var selectedSubTab by rememberSaveable { mutableIntStateOf(0) }
-    val subTabs = listOf("Audit", "Passwords", "Standards")
+    val subTabs = listOf(strings.tabAudit, strings.tabPasswords, strings.tabStandards)
 
     Column(modifier = modifier.fillMaxSize()) {
         TabRow(
@@ -114,7 +115,7 @@ fun SecurityScreen(
                     onClick = { selectedSubTab = idx },
                     text = {
                         Text(
-                            text = title.uppercase(),
+                            text = if (strings.isArabic) title else title.uppercase(),
                             style = MaterialTheme.typography.labelLarge,
                             color = if (selectedSubTab == idx) NeonRed else CrimsonTextMuted
                         )
@@ -151,6 +152,7 @@ private fun AuthorizedAuditTab(
     onRunAuthorizedAudit: () -> Unit,
     onGenerateReport: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val weakNetworks = state.discoveredNetworks.filter {
         it.securityProtocol == SecurityProtocol.OPEN ||
             it.securityProtocol == SecurityProtocol.WEP_LEGACY ||
@@ -164,7 +166,6 @@ private fun AuthorizedAuditTab(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Explicit Authorization Gate
         item {
             CyberPanel(highlighted = state.isAuthorizationConfirmed) {
                 Row(
@@ -178,19 +179,19 @@ private fun AuthorizedAuditTab(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Policy,
-                            contentDescription = "Authorization Confirmation",
+                            contentDescription = strings.authTestingTitle,
                             tint = if (state.isAuthorizationConfirmed) CyberGreen else NeonRed,
                             modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "AUTHORIZED SECURITY TESTING",
+                                text = strings.authTestingTitle,
                                 style = MaterialTheme.typography.titleSmall,
                                 color = PureWhite
                             )
                             Text(
-                                text = "I own or hold explicit written permission to audit this network.",
+                                text = strings.authTestingSubtitle,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = CrimsonTextMuted
                             )
@@ -225,11 +226,11 @@ private fun AuthorizedAuditTab(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Auditing…")
+                            Text(strings.btnAuditing)
                         } else {
-                            Icon(Icons.Rounded.GppGood, contentDescription = "Run Audit", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.GppGood, contentDescription = strings.btnRunConfigAudit, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Run Config Audit")
+                            Text(strings.btnRunConfigAudit)
                         }
                     }
 
@@ -238,22 +239,21 @@ private fun AuthorizedAuditTab(
                         border = BorderStroke(1.dp, CrimsonBorderBright),
                         modifier = Modifier.testTag("security_save_report_button")
                     ) {
-                        Text("Save Report", color = PureWhite)
+                        Text(strings.btnSaveReport, color = PureWhite)
                     }
                 }
             }
         }
 
-        // Audit Results
         val report = state.authorizedAuditReport
         if (report != null) {
             item {
                 CyberSectionHeader(
-                    title = "Configuration Audit — ${report.targetSsid}",
-                    subtitle = "Gateway: ${report.targetGateway ?: "N/A"}",
+                    title = "${strings.sectionConfigAudit} — ${report.targetSsid}",
+                    subtitle = "${strings.labelGateway}: ${report.targetGateway ?: strings.valueUnavailable}",
                     trailing = {
                         CyberBadge(
-                            text = "SCORE ${report.overallScore}/100",
+                            text = "${report.overallScore}/100",
                             color = if (report.overallScore >= 80) CyberGreen else CyberAmber,
                             backgroundColor = CyberGreenContainer
                         )
@@ -278,16 +278,15 @@ private fun AuthorizedAuditTab(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(check.detail, style = MaterialTheme.typography.bodySmall, color = PureWhite)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Action: ${check.remediation}", style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
+                    Text("${strings.labelAction} ${check.remediation}", style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
                 }
             }
         }
 
-        // Weak Configurations Found in Current Scan
         item {
             CyberSectionHeader(
-                title = "Weak Configs In RF Range",
-                subtitle = "${weakNetworks.size} access points flagged for legacy ciphers, open access, or WPS"
+                title = strings.sectionWeakConfigs,
+                subtitle = "${weakNetworks.size} ${strings.subtitleWeakConfigs}"
             )
         }
 
@@ -295,11 +294,7 @@ private fun AuthorizedAuditTab(
             item {
                 CyberPanel {
                     Text(
-                        text = if (state.discoveredNetworks.isEmpty()) {
-                            "No Wi-Fi scan results loaded yet. Scan nearby networks in the Scanner tab to inspect security posture."
-                        } else {
-                            "No open, WEP, WPA1, TKIP, or WPS-enabled networks detected in the current scan."
-                        },
+                        text = if (state.discoveredNetworks.isEmpty()) strings.emptyWeakNoScan else strings.emptyWeakClean,
                         style = MaterialTheme.typography.bodySmall,
                         color = CrimsonTextMuted
                     )
@@ -339,6 +334,7 @@ private fun LocalPasswordValidatorTab(
     onPasswordChange: (String) -> Unit,
     onGeneratePassphrase: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var showPassword by remember { mutableStateOf(false) }
     val analysis = state.passwordAnalysis
 
@@ -349,21 +345,21 @@ private fun LocalPasswordValidatorTab(
     ) {
         item {
             CyberSectionHeader(
-                title = "Local Passphrase Validator",
-                subtitle = "100% on-device entropy & WPA2/WPA3 compliance check — never transmitted"
+                title = strings.sectionPasswordValidator,
+                subtitle = strings.subtitlePasswordValidator
             )
             Spacer(modifier = Modifier.height(8.dp))
             CyberPanel {
                 OutlinedTextField(
                     value = state.passwordInput,
                     onValueChange = onPasswordChange,
-                    label = { Text("Test Your Own Wi-Fi Passphrase", color = CrimsonTextMuted) },
-                    leadingIcon = { Icon(Icons.Rounded.Key, contentDescription = "Passphrase", tint = NeonRed) },
+                    label = { Text(strings.labelTestPassphrase, color = CrimsonTextMuted) },
+                    leadingIcon = { Icon(Icons.Rounded.Key, contentDescription = strings.labelTestPassphrase, tint = NeonRed) },
                     trailingIcon = {
                         IconButton(onClick = { showPassword = !showPassword }) {
                             Icon(
                                 imageVector = if (showPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                                contentDescription = if (showPassword) "Hide passphrase" else "Show passphrase",
+                                contentDescription = if (showPassword) "Hide" else "Show",
                                 tint = CrimsonTextMuted
                             )
                         }
@@ -391,9 +387,9 @@ private fun LocalPasswordValidatorTab(
                         .fillMaxWidth()
                         .testTag("generate_passphrase_button")
                 ) {
-                    Icon(Icons.Rounded.AutoAwesome, contentDescription = "Generate", tint = NeonRed, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.AutoAwesome, contentDescription = strings.btnGeneratePassphrase, tint = NeonRed, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Generate Local 20-Char SecureRandom Key", color = PureWhite)
+                    Text(strings.btnGeneratePassphrase, color = PureWhite)
                 }
 
                 if (analysis != null) {
@@ -405,7 +401,7 @@ private fun LocalPasswordValidatorTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Strength: ${analysis.strengthLabel}",
+                            text = "${strings.labelStrength} ${strings.riskLabel(analysis.riskLevel)}",
                             style = MaterialTheme.typography.titleMedium,
                             color = fg
                         )
@@ -426,13 +422,13 @@ private fun LocalPasswordValidatorTab(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Length: ${analysis.length} chars (8–63 WPA spec: ${if (analysis.wpaLengthCompliant) "OK" else "INVALID"})",
+                        text = "${strings.labelLengthWpa} ${analysis.length} (WPA 8–63: ${if (analysis.wpaLengthCompliant) "OK" else "INVALID"})",
                         style = MonoMetricMedium,
                         color = PureWhite
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Offline WPA2 Resistance: ${analysis.estimatedCrackResistance}",
+                        text = "${strings.labelOfflineResistance} ${analysis.estimatedCrackResistance}",
                         style = MaterialTheme.typography.bodySmall,
                         color = CrimsonTextMuted
                     )
@@ -488,6 +484,7 @@ private fun StandardsAndHardeningTab(
     state: WifiToolsUiState,
     onToggleHardeningItem: (String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -495,8 +492,8 @@ private fun StandardsAndHardeningTab(
     ) {
         item {
             CyberSectionHeader(
-                title = "Router Hardening Checklist",
-                subtitle = "${state.completedHardeningIds.size}/${EncryptionKnowledgeBase.routerHardeningChecklist.size} verified"
+                title = strings.sectionHardening,
+                subtitle = "${strings.subtitleHardeningVerified} ${state.completedHardeningIds.size}/${EncryptionKnowledgeBase.routerHardeningChecklist.size}"
             )
         }
 
@@ -544,8 +541,8 @@ private fun StandardsAndHardeningTab(
         item {
             Spacer(modifier = Modifier.height(4.dp))
             CyberSectionHeader(
-                title = "Wi-Fi Encryption Reference",
-                subtitle = "WPA3, WPA2, OWE & legacy protocol architecture"
+                title = strings.sectionEncryptionRef,
+                subtitle = strings.subtitleEncryptionRef
             )
         }
 
@@ -569,13 +566,13 @@ private fun StandardsAndHardeningTab(
                     RiskBadge(riskLevel = std.riskLevel)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("Cipher Suite: ${std.cipherSuite}", style = MaterialTheme.typography.labelMedium, color = CyberCyan)
+                Text("${strings.labelCipherSuite} ${std.cipherSuite}", style = MaterialTheme.typography.labelMedium, color = CyberCyan)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(std.summary, style = MaterialTheme.typography.bodySmall, color = PureWhite)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Risk Profile: ${std.vulnerabilities}", style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
+                Text("${strings.labelRiskProfile} ${std.vulnerabilities}", style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Guidance: ${std.guidance}", style = MaterialTheme.typography.bodySmall, color = CyberGreen)
+                Text("${strings.labelGuidance} ${std.guidance}", style = MaterialTheme.typography.bodySmall, color = CyberGreen)
             }
         }
     }

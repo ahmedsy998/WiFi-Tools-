@@ -3,16 +3,19 @@ package com.example.presentation.navigation
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.Router
 import androidx.compose.material.icons.rounded.Security
@@ -43,6 +47,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -74,6 +79,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.domain.SecurityReportRecord
 import com.example.presentation.components.PulsingLiveDot
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.presentation.screens.AnalyzerScreen
 import com.example.presentation.screens.DashboardScreen
 import com.example.presentation.screens.ReportsScreen
@@ -82,6 +88,7 @@ import com.example.presentation.screens.ScannerScreen
 import com.example.presentation.screens.SecurityScreen
 import com.example.presentation.viewmodel.WifiToolsViewModel
 import com.example.ui.theme.CrimsonBorder
+import com.example.ui.theme.CrimsonBorderBright
 import com.example.ui.theme.CrimsonPanel
 import com.example.ui.theme.CrimsonPanelHigh
 import com.example.ui.theme.CrimsonTextMuted
@@ -92,16 +99,15 @@ import com.example.ui.theme.PureWhite
 
 enum class WifiToolsDestination(
     val route: String,
-    val label: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    DASHBOARD("dashboard", "Command", Icons.Rounded.Dashboard, Icons.Outlined.Dashboard),
-    SCANNER("scanner", "Scanner", Icons.Rounded.Radar, Icons.Outlined.Radar),
-    ANALYZER("analyzer", "Analyzer", Icons.Rounded.Speed, Icons.Outlined.Speed),
-    SECURITY("security", "Security", Icons.Rounded.Security, Icons.Outlined.Security),
-    ROUTER("router", "Router", Icons.Rounded.Router, Icons.Outlined.Router),
-    REPORTS("reports", "Reports", Icons.Rounded.Assessment, Icons.Outlined.Assessment)
+    DASHBOARD("dashboard", Icons.Rounded.Dashboard, Icons.Outlined.Dashboard),
+    SCANNER("scanner", Icons.Rounded.Radar, Icons.Outlined.Radar),
+    ANALYZER("analyzer", Icons.Rounded.Speed, Icons.Outlined.Speed),
+    SECURITY("security", Icons.Rounded.Security, Icons.Outlined.Security),
+    ROUTER("router", Icons.Rounded.Router, Icons.Outlined.Router),
+    REPORTS("reports", Icons.Rounded.Assessment, Icons.Outlined.Assessment)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,6 +116,7 @@ fun WifiToolsApp(
     viewModel: WifiToolsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val strings = LocalAppStrings.current
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: WifiToolsDestination.DASHBOARD.route
@@ -117,7 +124,15 @@ fun WifiToolsApp(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Refresh permission and radio status whenever user returns from Settings
+    fun destinationLabel(dest: WifiToolsDestination): String = when (dest) {
+        WifiToolsDestination.DASHBOARD -> strings.navCommand
+        WifiToolsDestination.SCANNER -> strings.navScanner
+        WifiToolsDestination.ANALYZER -> strings.navAnalyzer
+        WifiToolsDestination.SECURITY -> strings.navSecurity
+        WifiToolsDestination.ROUTER -> strings.navRouter
+        WifiToolsDestination.REPORTS -> strings.navReports
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -128,14 +143,12 @@ fun WifiToolsApp(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Modern runtime permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) {
         viewModel.refreshPermissionsAndConnection()
     }
 
-    // Zero-permission SAF report export
     var pendingExportContent by remember { mutableStateOf<String?>(null) }
     val exportDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("*/*")
@@ -158,7 +171,7 @@ fun WifiToolsApp(
             putExtra(Intent.EXTRA_TEXT, report.fullMarkdown)
         }
         runCatching {
-            context.startActivity(Intent.createChooser(shareIntent, "Share Security Assessment"))
+            context.startActivity(Intent.createChooser(shareIntent, strings.btnShare))
         }
     }
 
@@ -197,13 +210,13 @@ fun WifiToolsApp(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Rounded.Shield,
-                                    contentDescription = "WiFi Tools Emblem",
+                                    contentDescription = strings.appTitle,
                                     tint = NeonRed,
                                     modifier = Modifier.size(22.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "WIFI TOOLS",
+                                    text = strings.appTitle,
                                     style = MaterialTheme.typography.titleLarge,
                                     color = PureWhite
                                 )
@@ -212,7 +225,7 @@ fun WifiToolsApp(
                         actions = {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(end = 16.dp)
+                                modifier = Modifier.padding(end = 12.dp)
                             ) {
                                 PulsingLiveDot(
                                     active = uiState.activeConnection.isConnectedToWifi,
@@ -221,13 +234,35 @@ fun WifiToolsApp(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = if (uiState.activeConnection.isConnectedToWifi) {
-                                        "${uiState.activeConnection.band.label}"
+                                        uiState.activeConnection.band.label
                                     } else {
-                                        "NO WIFI"
+                                        strings.noWifiBadge
                                     },
                                     style = MaterialTheme.typography.labelMedium,
                                     color = CrimsonTextMuted
                                 )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                OutlinedButton(
+                                    onClick = { viewModel.toggleLanguage() },
+                                    border = BorderStroke(1.dp, CrimsonBorderBright),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    modifier = Modifier
+                                        .height(34.dp)
+                                        .testTag("language_toggle_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Language,
+                                        contentDescription = "Switch Language",
+                                        tint = NeonRed,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = uiState.language.toggleLabel,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = PureWhite
+                                    )
+                                }
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -249,18 +284,19 @@ fun WifiToolsApp(
                         ) {
                             WifiToolsDestination.entries.forEach { dest ->
                                 val selected = currentRoute == dest.route
+                                val label = destinationLabel(dest)
                                 NavigationBarItem(
                                     selected = selected,
                                     onClick = { navigateToRoute(dest.route) },
                                     icon = {
                                         Icon(
                                             imageVector = if (selected) dest.selectedIcon else dest.unselectedIcon,
-                                            contentDescription = dest.label
+                                            contentDescription = label
                                         )
                                     },
                                     label = {
                                         Text(
-                                            text = dest.label,
+                                            text = label,
                                             style = MaterialTheme.typography.labelSmall,
                                             maxLines = 1
                                         )
@@ -303,16 +339,17 @@ fun WifiToolsApp(
                     ) {
                         WifiToolsDestination.entries.forEach { dest ->
                             val selected = currentRoute == dest.route
+                            val label = destinationLabel(dest)
                             NavigationRailItem(
                                 selected = selected,
                                 onClick = { navigateToRoute(dest.route) },
                                 icon = {
                                     Icon(
                                         imageVector = if (selected) dest.selectedIcon else dest.unselectedIcon,
-                                        contentDescription = dest.label
+                                        contentDescription = label
                                     )
                                 },
-                                label = { Text(dest.label, style = MaterialTheme.typography.labelSmall) },
+                                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                                 colors = NavigationRailItemDefaults.colors(
                                     selectedIconColor = PureWhite,
                                     selectedTextColor = NeonRed,

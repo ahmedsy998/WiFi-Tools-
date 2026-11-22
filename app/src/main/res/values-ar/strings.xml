@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">أدوات الواي فاي</string>
+    <string name="nav_dashboard">القيادة</string>
+    <string name="nav_scanner">الفاحص</string>
+    <string name="nav_analyzer">المحلل</string>
+    <string name="nav_security">الأمان</string>
+    <string name="nav_router">الموجّه</string>
+    <string name="nav_reports">التقارير</string>
+    <string name="action_scan_now">فحص الشبكات</string>
+    <string name="action_grant_permissions">منح الأذونات</string>
+    <string name="action_open_settings">فتح الإعدادات</string>
+    <string name="action_save_snapshot">حفظ اللقطة</string>
+    <string name="action_export_report">تصدير التقرير</string>
+    <string name="action_share_report">مشاركة النتائج</string>
+    <string name="action_delete_all">مسح جميع السجلات</string>
+    <string name="status_scanning">جارٍ فحص الطيف اللاسلكي…</string>
+    <string name="status_idle">جاهز</string>
+    <string name="authorization_notice">للفحص المصرّح به فقط — استخدم الأداة حصراً على الشبكات التي تملكها أو تملك تفويضاً خطياً لفحصها.</string>
+    <string name="android_limitation_notice">قيود نظام أندرويد: لا يمكن للتطبيقات العادية دون صلاحيات الجذر تفعيل وضع المراقبة أو حقن الحزم أو استرجاع كلمات مرور الواي فاي المحفوظة أو تجاوز حماية WPA/WPA2/WPA3.</string>
+</resources>

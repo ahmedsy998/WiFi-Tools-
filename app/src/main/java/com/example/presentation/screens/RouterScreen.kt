@@ -37,12 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import com.example.presentation.components.CyberKeyValueRow
 import com.example.presentation.components.CyberMetricTile
 import com.example.presentation.components.CyberPanel
 import com.example.presentation.components.CyberSectionHeader
 import com.example.presentation.components.LatencySparklineChart
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.presentation.viewmodel.WifiToolsUiState
 import com.example.ui.theme.CrimsonBorder
 import com.example.ui.theme.CrimsonBorderBright
@@ -66,6 +68,7 @@ fun RouterScreen(
     onSaveDiagnosticReport: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val conn = state.activeConnection
     val result = state.latencyDiagnosticResult
     val samplesToPlot = if (state.isRunningLatencyTest) state.liveProbeSamples else result?.samples.orEmpty()
@@ -75,37 +78,58 @@ fun RouterScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Gateway & DNS Routing Table
         item {
             CyberSectionHeader(
-                title = "Gateway & DNS Configuration",
-                subtitle = "Extracted from Android LinkProperties & active Wi-Fi interface"
+                title = strings.sectionGatewayDns,
+                subtitle = strings.subtitleGatewayDns
             )
             Spacer(modifier = Modifier.height(8.dp))
             CyberPanel {
-                CyberKeyValueRow("Default Gateway", conn.gatewayIp ?: "Not Available")
-                CyberKeyValueRow("Assigned IP(s)", conn.localIpAddresses.joinToString("\n").ifBlank { "Not Available" })
-                CyberKeyValueRow("Subnet Prefix", conn.subnetMaskOrPrefix ?: "N/A")
-                CyberKeyValueRow("Primary DNS", conn.dnsServers.getOrNull(0) ?: "Not Available")
-                CyberKeyValueRow("Secondary DNS", conn.dnsServers.getOrNull(1) ?: "None")
                 CyberKeyValueRow(
-                    "Private DNS (DoT)",
-                    if (conn.isPrivateDnsActive) conn.privateDnsServerName ?: "Active (Opportunistic)" else "Off",
+                    strings.labelDefaultGateway,
+                    conn.gatewayIp ?: strings.valueUnavailable,
+                    forceLtrValue = conn.gatewayIp != null
+                )
+                CyberKeyValueRow(
+                    strings.labelAssignedIps,
+                    conn.localIpAddresses.joinToString("\n").ifBlank { strings.valueUnavailable },
+                    forceLtrValue = conn.localIpAddresses.isNotEmpty()
+                )
+                CyberKeyValueRow(
+                    strings.labelSubnetPrefix,
+                    conn.subnetMaskOrPrefix ?: "N/A",
+                    forceLtrValue = true
+                )
+                CyberKeyValueRow(
+                    strings.labelPrimaryDns,
+                    conn.dnsServers.getOrNull(0) ?: strings.valueUnavailable,
+                    forceLtrValue = conn.dnsServers.isNotEmpty()
+                )
+                CyberKeyValueRow(
+                    strings.labelSecondaryDns,
+                    conn.dnsServers.getOrNull(1) ?: strings.valueNone,
+                    forceLtrValue = conn.dnsServers.size > 1
+                )
+                CyberKeyValueRow(
+                    strings.labelPrivateDns,
+                    if (conn.isPrivateDnsActive) conn.privateDnsServerName ?: strings.valueEnabledDot else strings.valueNone,
                     valueColor = if (conn.isPrivateDnsActive) CyberGreen else CyberAmber
                 )
-                CyberKeyValueRow("Interface / MTU", "${conn.interfaceName ?: "wlan0"} • ${if (conn.mtu > 0) "${conn.mtu} B" else "Auto"}")
+                CyberKeyValueRow(
+                    strings.labelInterfaceMtu,
+                    "${conn.interfaceName ?: "wlan0"} • ${if (conn.mtu > 0) "${conn.mtu} B" else "Auto"}",
+                    forceLtrValue = true
+                )
             }
         }
 
-        // Latency & Packet Loss Test Console
         item {
             CyberSectionHeader(
-                title = "Authorized Latency & Loss Test",
-                subtitle = "Genuine TCP/ICMP multi-probe RTT, jitter & packet-loss analyzer"
+                title = strings.sectionLatencyTest,
+                subtitle = strings.subtitleLatencyTest
             )
             Spacer(modifier = Modifier.height(8.dp))
             CyberPanel(highlighted = state.isRunningLatencyTest) {
-                // Quick Authorized Target Presets
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,7 +137,7 @@ fun RouterScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     if (!conn.gatewayIp.isNullOrBlank()) {
-                        PresetHostChip("Gateway (${conn.gatewayIp})") {
+                        PresetHostChip("${strings.labelGateway} (${conn.gatewayIp})") {
                             onHostChange(conn.gatewayIp)
                             onPortChange("80")
                         }
@@ -144,7 +168,7 @@ fun RouterScreen(
                     OutlinedTextField(
                         value = state.targetHostInput,
                         onValueChange = onHostChange,
-                        label = { Text("Authorized Host / IP", color = CrimsonTextMuted) },
+                        label = { Text(strings.labelAuthorizedHost, color = CrimsonTextMuted) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -162,7 +186,7 @@ fun RouterScreen(
                     OutlinedTextField(
                         value = state.targetPortInput,
                         onValueChange = onPortChange,
-                        label = { Text("Port", color = CrimsonTextMuted) },
+                        label = { Text(strings.labelPort, color = CrimsonTextMuted) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
@@ -185,7 +209,7 @@ fun RouterScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Probe Count:", style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
+                    Text(strings.labelProbeCount, style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         listOf(4, 6, 10).forEach { count ->
                             AssistChip(
@@ -218,11 +242,11 @@ fun RouterScreen(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Probing (${state.liveProbeSamples.size}/${state.probeCountInput})…")
+                            Text("${strings.btnProbing} (${state.liveProbeSamples.size}/${state.probeCountInput})…")
                         } else {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Start Test", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = strings.btnRunProbeTest, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Run Probe Test")
+                            Text(strings.btnRunProbeTest)
                         }
                     }
 
@@ -231,18 +255,17 @@ fun RouterScreen(
                         border = BorderStroke(1.dp, CrimsonBorderBright),
                         modifier = Modifier.testTag("router_save_report_button")
                     ) {
-                        Icon(Icons.Rounded.Save, contentDescription = "Save Report", tint = PureWhite, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Save, contentDescription = strings.btnSaveReport, tint = PureWhite, modifier = Modifier.size(16.dp))
                     }
                 }
             }
         }
 
-        // Live / Completed Latency Metrics & Sparkline
         if (samplesToPlot.isNotEmpty()) {
             item {
                 CyberPanel {
                     Text(
-                        text = "RTT TELEMETRY SPARKLINE",
+                        text = strings.labelRttSparkline,
                         style = MaterialTheme.typography.labelLarge,
                         color = NeonRed
                     )
@@ -256,7 +279,7 @@ fun RouterScreen(
                             } else {
                                 "#${sample.sequence}  ${sample.method}  TIMEOUT (${sample.errorDetail ?: "Unreachable"})"
                             },
-                            style = MonoCodeStyle,
+                            style = MonoCodeStyle.copy(textDirection = TextDirection.Ltr),
                             color = if (sample.reachable) CyberGreen else CyberCritical
                         )
                     }
@@ -271,7 +294,7 @@ fun RouterScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     CyberMetricTile(
-                        label = "Avg RTT",
+                        label = strings.metricAvgRtt,
                         value = result.avgLatencyMs?.let { "%.1f".format(it) } ?: "--",
                         unit = "ms",
                         accentColor = CyberCyan,
@@ -279,7 +302,7 @@ fun RouterScreen(
                         modifier = Modifier.weight(1f)
                     )
                     CyberMetricTile(
-                        label = "Packet Loss",
+                        label = strings.metricPacketLoss,
                         value = "%.0f".format(result.packetLossPercent),
                         unit = "%",
                         accentColor = if (result.packetLossPercent == 0.0) CyberGreen else CyberCritical,
@@ -291,15 +314,17 @@ fun RouterScreen(
 
             item {
                 CyberPanel {
-                    CyberKeyValueRow("Target", "${result.targetHost}:${result.targetPort}")
-                    CyberKeyValueRow("Resolved IP", result.resolvedIp ?: "DNS Unresolved")
+                    CyberKeyValueRow(strings.labelTarget, "${result.targetHost}:${result.targetPort}", forceLtrValue = true)
+                    CyberKeyValueRow(strings.labelResolvedIp, result.resolvedIp ?: strings.valueDnsUnresolved, forceLtrValue = result.resolvedIp != null)
                     CyberKeyValueRow(
-                        "Min / Max RTT",
-                        "${result.minLatencyMs ?: "--"} ms / ${result.maxLatencyMs ?: "--"} ms"
+                        strings.labelMinMaxRtt,
+                        "${result.minLatencyMs ?: "--"} ms / ${result.maxLatencyMs ?: "--"} ms",
+                        forceLtrValue = true
                     )
                     CyberKeyValueRow(
-                        "Jitter",
-                        result.jitterMs?.let { "%.1f ms".format(it) } ?: "N/A"
+                        strings.labelJitter,
+                        result.jitterMs?.let { "%.1f ms".format(it) } ?: "N/A",
+                        forceLtrValue = true
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(

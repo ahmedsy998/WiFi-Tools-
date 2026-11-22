@@ -22,6 +22,13 @@ val InterFontFamily = FontFamily(
     Font(R.font.inter, FontWeight.Bold)
 )
 
+val CairoFontFamily = FontFamily(
+    Font(R.font.cairo, FontWeight.Normal),
+    Font(R.font.cairo, FontWeight.Medium),
+    Font(R.font.cairo, FontWeight.SemiBold),
+    Font(R.font.cairo, FontWeight.Bold)
+)
+
 val JetBrainsMonoFontFamily = FontFamily(
     Font(R.font.jetbrains_mono, FontWeight.Normal),
     Font(R.font.jetbrains_mono, FontWeight.Medium),
@@ -40,7 +47,7 @@ val MonoMetricLarge = TextStyle(
 val MonoMetricMedium = TextStyle(
     fontFamily = JetBrainsMonoFontFamily,
     fontWeight = FontWeight.SemiBold,
-    fontSize = 15.sp,
+    fontSize = 14.sp,
     lineHeight = 20.sp,
     letterSpacing = 0.sp
 )
@@ -53,89 +60,98 @@ val MonoCodeStyle = TextStyle(
     letterSpacing = 0.2.sp
 )
 
-val Typography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 42.sp,
-        letterSpacing = (-0.5).sp
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        lineHeight = 32.sp,
-        letterSpacing = (-0.25).sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 21.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 15.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.15.sp
-    ),
-    titleSmall = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        letterSpacing = 0.3.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.15.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        lineHeight = 19.sp,
-        letterSpacing = 0.2.sp
-    ),
-    bodySmall = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.25.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = SpaceGroteskFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        letterSpacing = 0.4.sp
-    ),
-    labelMedium = TextStyle(
-        fontFamily = JetBrainsMonoFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 15.sp,
-        letterSpacing = 0.5.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = JetBrainsMonoFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 10.sp,
-        lineHeight = 14.sp,
-        letterSpacing = 0.6.sp
+fun buildAppTypography(isArabic: Boolean): Typography {
+    val displayFont = if (isArabic) CairoFontFamily else SpaceGroteskFontFamily
+    val bodyFont = if (isArabic) CairoFontFamily else InterFontFamily
+    val labelFont = if (isArabic) CairoFontFamily else JetBrainsMonoFontFamily
+    val letterSpacingAdjust = if (isArabic) 0.sp else 0.3.sp
+
+    return Typography(
+        displayLarge = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 34.sp,
+            lineHeight = 42.sp,
+            letterSpacing = 0.sp
+        ),
+        headlineLarge = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            lineHeight = 32.sp,
+            letterSpacing = 0.sp
+        ),
+        headlineMedium = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp,
+            lineHeight = 28.sp,
+            letterSpacing = 0.sp
+        ),
+        titleLarge = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            lineHeight = 26.sp,
+            letterSpacing = 0.sp
+        ),
+        titleMedium = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.Medium,
+            fontSize = 15.sp,
+            lineHeight = 22.sp,
+            letterSpacing = 0.sp
+        ),
+        titleSmall = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            lineHeight = 19.sp,
+            letterSpacing = letterSpacingAdjust
+        ),
+        bodyLarge = TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 15.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.sp
+        ),
+        bodyMedium = TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 13.sp,
+            lineHeight = 21.sp,
+            letterSpacing = 0.sp
+        ),
+        bodySmall = TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 12.sp,
+            lineHeight = 19.sp,
+            letterSpacing = 0.sp
+        ),
+        labelLarge = TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            lineHeight = 19.sp,
+            letterSpacing = letterSpacingAdjust
+        ),
+        labelMedium = TextStyle(
+            fontFamily = labelFont,
+            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp,
+            lineHeight = 16.sp,
+            letterSpacing = letterSpacingAdjust
+        ),
+        labelSmall = TextStyle(
+            fontFamily = labelFont,
+            fontWeight = FontWeight.Medium,
+            fontSize = 10.sp,
+            lineHeight = 15.sp,
+            letterSpacing = letterSpacingAdjust
+        )
     )
-)
+}
+
+val Typography = buildAppTypography(isArabic = true)

@@ -15,8 +15,10 @@ import com.example.domain.SecurityReportRecord
 import com.example.domain.WifiBand
 import com.example.domain.WifiNetwork
 import com.example.permissions.WifiPermissionSnapshot
+import com.example.presentation.i18n.AppLanguage
 
 data class WifiToolsUiState(
+    val language: AppLanguage = AppLanguage.ARABIC,
     val permissions: WifiPermissionSnapshot = WifiPermissionSnapshot(
         hasFineLocation = false,
         hasCoarseLocation = false,

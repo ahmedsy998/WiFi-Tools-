@@ -44,11 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.domain.AuditCheckStatus
 import com.example.domain.RiskLevel
 import com.example.permissions.WifiPermissionSnapshot
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.ui.theme.CrimsonBorder
 import com.example.ui.theme.CrimsonBorderBright
 import com.example.ui.theme.CrimsonPanel
@@ -109,6 +112,7 @@ fun CyberSectionHeader(
     trailing: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -124,7 +128,7 @@ fun CyberSectionHeader(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = title.uppercase(),
+                    text = if (strings.isArabic) title else title.uppercase(),
                     style = MaterialTheme.typography.titleSmall,
                     color = PureWhite
                 )
@@ -172,19 +176,21 @@ fun CyberBadge(
 
 @Composable
 fun RiskBadge(riskLevel: RiskLevel, modifier: Modifier = Modifier) {
+    val strings = LocalAppStrings.current
     val (fg, bg) = riskColors(riskLevel)
-    CyberBadge(text = riskLevel.label, color = fg, backgroundColor = bg, modifier = modifier)
+    CyberBadge(text = strings.riskLabel(riskLevel), color = fg, backgroundColor = bg, modifier = modifier)
 }
 
 @Composable
 fun AuditStatusBadge(status: AuditCheckStatus, modifier: Modifier = Modifier) {
+    val strings = LocalAppStrings.current
     val (fg, bg) = when (status) {
         AuditCheckStatus.PASS -> CyberGreen to CyberGreenContainer
         AuditCheckStatus.WARN -> CyberAmber to CyberAmberContainer
         AuditCheckStatus.FAIL -> CyberCritical to CyberCriticalContainer
         AuditCheckStatus.INFO -> CyberCyan to CyberCyanContainer
     }
-    CyberBadge(text = status.label, color = fg, backgroundColor = bg, modifier = modifier)
+    CyberBadge(text = strings.auditStatusLabel(status), color = fg, backgroundColor = bg, modifier = modifier)
 }
 
 fun riskColors(riskLevel: RiskLevel): Pair<Color, Color> = when (riskLevel) {
@@ -204,6 +210,7 @@ fun CyberMetricTile(
     icon: ImageVector? = null,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     CyberPanel(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -211,7 +218,7 @@ fun CyberMetricTile(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = label.uppercase(),
+                text = if (strings.isArabic) label else label.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = CrimsonTextMuted,
                 maxLines = 1,
@@ -230,13 +237,13 @@ fun CyberMetricTile(
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = value,
-                style = MonoMetricLarge,
+                style = MonoMetricLarge.copy(textDirection = TextDirection.Ltr),
                 color = PureWhite,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             if (!unit.isNullOrBlank()) {
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = unit,
                     style = MaterialTheme.typography.labelMedium,
@@ -253,6 +260,7 @@ fun CyberKeyValueRow(
     label: String,
     value: String,
     valueColor: Color = PureWhite,
+    forceLtrValue: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -270,8 +278,9 @@ fun CyberKeyValueRow(
         )
         Text(
             text = value,
-            style = MonoMetricMedium,
+            style = if (forceLtrValue) MonoMetricMedium.copy(textDirection = TextDirection.Ltr) else MonoMetricMedium,
             color = valueColor,
+            textAlign = TextAlign.End,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(0.55f)
@@ -314,8 +323,16 @@ fun PermissionStatusBanner(
 ) {
     if (snapshot.canTriggerWifiScan) return
 
+    val strings = LocalAppStrings.current
     val isMissingPerm = snapshot.missingPermissions.isNotEmpty()
     val accent = if (isMissingPerm) NeonRed else CyberAmber
+    val localizedSummary = when {
+        !snapshot.hasFineLocation -> strings.permFineLocationHint
+        snapshot.androidSdkInt >= 33 && !snapshot.hasNearbyWifiDevices -> strings.permNearbyHint
+        !snapshot.isLocationServiceEnabled -> strings.permLocationServiceHint
+        !snapshot.isWifiEnabled -> strings.permWifiRadioHint
+        else -> strings.permAllReadyHint
+    }
 
     CyberPanel(
         modifier = modifier.fillMaxWidth(),
@@ -324,16 +341,16 @@ fun PermissionStatusBanner(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Rounded.WarningAmber,
-                contentDescription = "Permission or radio notice",
+                contentDescription = strings.permRequiredTitle,
                 tint = accent,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = when {
-                    isMissingPerm -> "ANDROID PERMISSION REQUIRED"
-                    !snapshot.isLocationServiceEnabled -> "LOCATION SERVICES DISABLED"
-                    else -> "WI-FI RADIO DISABLED"
+                    isMissingPerm -> strings.permRequiredTitle
+                    !snapshot.isLocationServiceEnabled -> strings.locationDisabledTitle
+                    else -> strings.wifiDisabledTitle
                 },
                 style = MaterialTheme.typography.titleSmall,
                 color = accent,
@@ -342,7 +359,7 @@ fun PermissionStatusBanner(
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = snapshot.statusSummary,
+            text = localizedSummary,
             style = MaterialTheme.typography.bodySmall,
             color = PureWhite
         )
@@ -354,14 +371,14 @@ fun PermissionStatusBanner(
                     colors = ButtonDefaults.buttonColors(containerColor = NeonRed),
                     modifier = Modifier.testTag("grant_permissions_button")
                 ) {
-                    Text("Grant Access")
+                    Text(strings.btnGrantAccess)
                 }
                 OutlinedButton(
                     onClick = onOpenAppSettings,
                     border = BorderStroke(1.dp, CrimsonBorderBright),
                     modifier = Modifier.testTag("open_app_settings_button")
                 ) {
-                    Text("App Settings", color = PureWhite)
+                    Text(strings.btnAppSettings, color = PureWhite)
                 }
             } else if (!snapshot.isLocationServiceEnabled) {
                 Button(
@@ -369,7 +386,7 @@ fun PermissionStatusBanner(
                     colors = ButtonDefaults.buttonColors(containerColor = CyberAmber, contentColor = Color.Black),
                     modifier = Modifier.testTag("open_location_settings_button")
                 ) {
-                    Text("Enable Location")
+                    Text(strings.btnEnableLocation)
                 }
             } else if (!snapshot.isWifiEnabled) {
                 Button(
@@ -377,7 +394,7 @@ fun PermissionStatusBanner(
                     colors = ButtonDefaults.buttonColors(containerColor = NeonRed),
                     modifier = Modifier.testTag("open_wifi_settings_button")
                 ) {
-                    Text("Enable Wi-Fi")
+                    Text(strings.btnEnableWifi)
                 }
             }
         }
@@ -388,26 +405,25 @@ fun PermissionStatusBanner(
 fun AndroidLimitationDisclosureCard(
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     CyberPanel(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Rounded.Info,
-                contentDescription = "Android OS Limitations",
+                contentDescription = strings.osLimitsTitle,
                 tint = CyberCyan,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "ANDROID OS & HARDWARE BOUNDARIES",
+                text = strings.osLimitsTitle,
                 style = MaterialTheme.typography.labelLarge,
                 color = CyberCyan
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "• Standard non-rooted Android applications operate within Android's sandbox and cannot enable 802.11 monitor mode, capture raw management frames, or perform packet injection.\n" +
-                "• Android strictly blocks ordinary apps from reading arbitrary saved Wi-Fi passphrases or bypassing WPA/WPA2/WPA3 authentication.\n" +
-                "• Android 9+ enforces foreground Wi-Fi scan throttling (up to 4 active scans per 2 minutes) and requires Location Services for BSSID/SSID discovery.",
+            text = strings.osLimitsBody,
             style = MaterialTheme.typography.bodySmall,
             color = CrimsonTextMuted
         )

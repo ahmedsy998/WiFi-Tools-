@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.presentation.navigation.WifiToolsApp
 import com.example.presentation.viewmodel.WifiToolsViewModel
@@ -21,10 +23,11 @@ class MainActivity : ComponentActivity() {
         val appContainer = (application as WifiToolsApplication).container
 
         setContent {
-            WifiToolsTheme {
-                val viewModel: WifiToolsViewModel = viewModel(
-                    factory = WifiToolsViewModel.factory(appContainer)
-                )
+            val viewModel: WifiToolsViewModel = viewModel(
+                factory = WifiToolsViewModel.factory(appContainer)
+            )
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            WifiToolsTheme(language = uiState.language) {
                 WifiToolsApp(viewModel = viewModel)
             }
         }

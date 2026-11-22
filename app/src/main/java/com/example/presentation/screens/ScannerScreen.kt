@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.domain.NetworkSecurityAssessment
@@ -66,6 +67,7 @@ import com.example.presentation.components.CyberKeyValueRow
 import com.example.presentation.components.CyberPanel
 import com.example.presentation.components.PermissionStatusBanner
 import com.example.presentation.components.RiskBadge
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.presentation.viewmodel.WifiToolsUiState
 import com.example.ui.theme.CrimsonBorder
 import com.example.ui.theme.CrimsonBorderBright
@@ -75,11 +77,9 @@ import com.example.ui.theme.CrimsonTextMuted
 import com.example.ui.theme.CyberAmber
 import com.example.ui.theme.CyberAmberContainer
 import com.example.ui.theme.CyberCritical
-import com.example.ui.theme.CyberCriticalContainer
 import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.CyberCyanContainer
 import com.example.ui.theme.CyberGreen
-import com.example.ui.theme.CyberGreenContainer
 import com.example.ui.theme.MonoCodeStyle
 import com.example.ui.theme.MonoMetricMedium
 import com.example.ui.theme.NeonRed
@@ -103,6 +103,7 @@ fun ScannerScreen(
     onOpenAppSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var sortMenuExpanded by remember { mutableStateOf(false) }
     val networks = state.filteredNetworks
 
@@ -140,7 +141,7 @@ fun ScannerScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "${networks.size} OF ${state.discoveredNetworks.size} ACCESS POINTS",
+                                text = "${networks.size} ${strings.scannerCountFormat} ${state.discoveredNetworks.size}",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = PureWhite
                             )
@@ -157,9 +158,9 @@ fun ScannerScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = NeonRed),
                             modifier = Modifier.testTag("scanner_refresh_button")
                         ) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Scan", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.Refresh, contentDescription = strings.btnScan, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Scan")
+                            Text(strings.btnScan)
                         }
                     }
 
@@ -168,12 +169,12 @@ fun ScannerScreen(
                     OutlinedTextField(
                         value = state.searchQuery,
                         onValueChange = onSearchChange,
-                        placeholder = { Text("Filter SSID, BSSID, or protocol…", color = CrimsonTextMuted) },
-                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = "Search", tint = NeonRed) },
+                        placeholder = { Text(strings.searchPlaceholder, color = CrimsonTextMuted) },
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = strings.searchPlaceholder, tint = NeonRed) },
                         trailingIcon = {
                             if (state.searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { onSearchChange("") }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Clear search", tint = CrimsonTextMuted)
+                                    Icon(Icons.Rounded.Close, contentDescription = "Clear", tint = CrimsonTextMuted)
                                 }
                             }
                         },
@@ -202,7 +203,7 @@ fun ScannerScreen(
                     ) {
                         CyberFilterChip(
                             selected = state.selectedBandFilter == null,
-                            label = "All Bands",
+                            label = strings.filterAllBands,
                             onClick = { onBandFilterSelect(null) }
                         )
                         listOf(WifiBand.BAND_2_4_GHZ, WifiBand.BAND_5_GHZ, WifiBand.BAND_6_GHZ).forEach { band ->
@@ -216,7 +217,7 @@ fun ScannerScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Security Filter + Sort + Save Row
+                    // Security Filter Chips
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -227,7 +228,7 @@ fun ScannerScreen(
                         SecurityFilter.entries.forEach { secFilter ->
                             CyberFilterChip(
                                 selected = state.selectedSecurityFilter == secFilter,
-                                label = secFilter.label,
+                                label = strings.securityFilterLabel(secFilter),
                                 onClick = { onSecurityFilterSelect(secFilter) }
                             )
                         }
@@ -245,9 +246,9 @@ fun ScannerScreen(
                                 border = BorderStroke(1.dp, CrimsonBorderBright),
                                 modifier = Modifier.testTag("scanner_sort_button")
                             ) {
-                                Icon(Icons.Rounded.Sort, contentDescription = "Sort", tint = NeonRed, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Rounded.Sort, contentDescription = strings.sortPrefix, tint = NeonRed, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sort: ${state.selectedSortOption.label}", color = PureWhite)
+                                Text("${strings.sortPrefix} ${strings.sortOptionLabel(state.selectedSortOption)}", color = PureWhite)
                             }
                             DropdownMenu(
                                 expanded = sortMenuExpanded,
@@ -255,7 +256,7 @@ fun ScannerScreen(
                             ) {
                                 NetworkSortOption.entries.forEach { option ->
                                     DropdownMenuItem(
-                                        text = { Text(option.label) },
+                                        text = { Text(strings.sortOptionLabel(option)) },
                                         onClick = {
                                             onSortOptionSelect(option)
                                             sortMenuExpanded = false
@@ -270,9 +271,9 @@ fun ScannerScreen(
                             border = BorderStroke(1.dp, CrimsonBorderBright),
                             modifier = Modifier.testTag("scanner_save_history_button")
                         ) {
-                            Icon(Icons.Rounded.Save, contentDescription = "Save Scan", tint = PureWhite, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Rounded.Save, contentDescription = strings.btnLogScan, tint = PureWhite, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Log Scan", color = PureWhite)
+                            Text(strings.btnLogScan, color = PureWhite)
                         }
                     }
                 }
@@ -289,23 +290,19 @@ fun ScannerScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Radar,
-                                contentDescription = "No networks discovered",
+                                contentDescription = strings.emptyNoApsTitle,
                                 tint = CrimsonTextMuted,
                                 modifier = Modifier.size(44.dp)
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = if (state.discoveredNetworks.isEmpty()) "No Wi-Fi Access Points Reported Yet" else "No Networks Match Active Filters",
+                                text = if (state.discoveredNetworks.isEmpty()) strings.emptyNoApsTitle else strings.emptyNoMatchTitle,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = PureWhite
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = if (state.discoveredNetworks.isEmpty()) {
-                                    "Ensure Wi-Fi and Location Services are enabled, grant Precise Location permission, and tap Scan. Note: Android emulators only report virtual APs if configured."
-                                } else {
-                                    "Try clearing search text or switching back to All Bands / All Security."
-                                },
+                                text = if (state.discoveredNetworks.isEmpty()) strings.emptyNoApsBody else strings.emptyNoMatchBody,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = CrimsonTextMuted
                             )
@@ -323,7 +320,6 @@ fun ScannerScreen(
         }
     }
 
-    // Detailed Network Security Inspection Sheet
     val inspected = state.selectedNetworkForDetail
     val assessment = state.selectedNetworkAssessment
     if (inspected != null && assessment != null) {
@@ -409,7 +405,7 @@ private fun WifiNetworkCard(
                     )
                     Text(
                         text = network.bssid,
-                        style = MonoCodeStyle,
+                        style = MonoCodeStyle.copy(textDirection = TextDirection.Ltr),
                         color = CrimsonTextMuted
                     )
                 }
@@ -420,7 +416,7 @@ private fun WifiNetworkCard(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "${network.rssi} dBm",
-                        style = MonoMetricMedium,
+                        style = MonoMetricMedium.copy(textDirection = TextDirection.Ltr),
                         color = PureWhite
                     )
                     Text(
@@ -436,7 +432,9 @@ private fun WifiNetworkCard(
 
         Spacer(modifier = Modifier.height(10.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -462,8 +460,8 @@ private fun WifiNetworkCard(
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "${network.frequencyMhz} MHz • ${network.channelWidth} • ${network.wifiStandard} • Score ${network.securityScore}/100",
-            style = MaterialTheme.typography.labelSmall,
+            text = "${network.frequencyMhz} MHz • ${network.channelWidth} • ${network.wifiStandard} • ${network.securityScore}/100",
+            style = MaterialTheme.typography.labelSmall.copy(textDirection = TextDirection.Ltr),
             color = CrimsonTextMuted
         )
     }
@@ -475,6 +473,7 @@ private fun NetworkDetailSheetContent(
     assessment: NetworkSecurityAssessment,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
@@ -496,7 +495,7 @@ private fun NetworkDetailSheetContent(
                     )
                     Text(
                         text = "BSSID ${network.bssid}",
-                        style = MonoCodeStyle,
+                        style = MonoCodeStyle.copy(textDirection = TextDirection.Ltr),
                         color = CrimsonTextMuted
                     )
                 }
@@ -506,20 +505,24 @@ private fun NetworkDetailSheetContent(
 
         item {
             CyberPanel {
-                CyberKeyValueRow("Security Score", "${assessment.score} / 100")
-                CyberKeyValueRow("Protocol", network.securityProtocol.label)
-                CyberKeyValueRow("Frequency / Band", "${network.frequencyMhz} MHz (${network.band.label})")
-                CyberKeyValueRow("Channel / Width", "Ch ${network.channel} • ${network.channelWidth}")
-                CyberKeyValueRow("Wi-Fi Standard", network.wifiStandard)
-                CyberKeyValueRow("Signal Level", "${network.rssi} dBm (${network.signalPercent}%)")
-                CyberKeyValueRow("WPS Advertised", if (network.hasWps) "YES (High Risk)" else "No", if (network.hasWps) CyberCritical else CyberGreen)
-                CyberKeyValueRow("Raw Capabilities", network.capabilities.ifBlank { "None" })
+                CyberKeyValueRow(strings.detailSecurityScore, "${assessment.score} / 100", forceLtrValue = true)
+                CyberKeyValueRow(strings.detailProtocol, network.securityProtocol.label, forceLtrValue = true)
+                CyberKeyValueRow(strings.detailFreqBand, "${network.frequencyMhz} MHz (${network.band.label})", forceLtrValue = true)
+                CyberKeyValueRow(strings.detailChannelWidth, "Ch ${network.channel} • ${network.channelWidth}", forceLtrValue = true)
+                CyberKeyValueRow(strings.detailWifiStandard, network.wifiStandard, forceLtrValue = true)
+                CyberKeyValueRow(strings.detailSignalLevel, "${network.rssi} dBm (${network.signalPercent}%)", forceLtrValue = true)
+                CyberKeyValueRow(
+                    strings.detailWpsAdvertised,
+                    if (network.hasWps) strings.wpsYesRisk else strings.wpsNo,
+                    if (network.hasWps) CyberCritical else CyberGreen
+                )
+                CyberKeyValueRow(strings.detailRawCaps, network.capabilities.ifBlank { strings.valueNone }, forceLtrValue = true)
             }
         }
 
         item {
             Text(
-                text = "SECURITY FINDINGS",
+                text = strings.sectionSecurityFindings,
                 style = MaterialTheme.typography.titleSmall,
                 color = NeonRed
             )
@@ -543,7 +546,7 @@ private fun NetworkDetailSheetContent(
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(finding.description, style = MaterialTheme.typography.bodySmall, color = CrimsonTextMuted)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("Recommendation: ${finding.recommendation}", style = MaterialTheme.typography.bodySmall, color = PureWhite)
+                Text("${strings.labelRecommendation} ${finding.recommendation}", style = MaterialTheme.typography.bodySmall, color = PureWhite)
             }
         }
 
@@ -555,7 +558,7 @@ private fun NetworkDetailSheetContent(
                 colors = ButtonDefaults.buttonColors(containerColor = NeonRed),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Close Inspection")
+                Text(strings.btnCloseInspection)
             }
         }
     }

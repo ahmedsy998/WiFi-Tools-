@@ -5,7 +5,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.example.presentation.i18n.AppLanguage
+import com.example.presentation.i18n.ArabicStrings
+import com.example.presentation.i18n.EnglishStrings
+import com.example.presentation.i18n.LocalAppStrings
 
 private val CyberDarkColorScheme = darkColorScheme(
     primary = NeonRed,
@@ -49,12 +56,22 @@ private val CyberShapes = Shapes(
 
 @Composable
 fun WifiToolsTheme(
+    language: AppLanguage = AppLanguage.ARABIC,
     content: @Composable () -> Unit
 ) {
-    MaterialTheme(
-        colorScheme = CyberDarkColorScheme,
-        typography = Typography,
-        shapes = CyberShapes,
-        content = content
-    )
+    val isArabic = language == AppLanguage.ARABIC
+    val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
+    val strings = if (isArabic) ArabicStrings else EnglishStrings
+
+    CompositionLocalProvider(
+        LocalLayoutDirection provides layoutDirection,
+        LocalAppStrings provides strings
+    ) {
+        MaterialTheme(
+            colorScheme = CyberDarkColorScheme,
+            typography = buildAppTypography(isArabic = isArabic),
+            shapes = CyberShapes,
+            content = content
+        )
+    }
 }

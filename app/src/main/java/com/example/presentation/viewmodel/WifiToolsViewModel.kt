@@ -9,6 +9,7 @@ import com.example.domain.SecurityFilter
 import com.example.domain.SecurityReportRecord
 import com.example.domain.WifiBand
 import com.example.domain.WifiNetwork
+import com.example.presentation.i18n.AppLanguage
 import com.example.utils.AppLogger
 import com.example.utils.WifiChannelUtils
 import kotlinx.coroutines.delay
@@ -25,6 +26,13 @@ class WifiToolsViewModel(
 
     private val _uiState = MutableStateFlow(WifiToolsUiState())
     val uiState: StateFlow<WifiToolsUiState> = _uiState.asStateFlow()
+
+    fun toggleLanguage() {
+        _uiState.update { state ->
+            val next = if (state.language == AppLanguage.ARABIC) AppLanguage.ENGLISH else AppLanguage.ARABIC
+            state.copy(language = next)
+        }
+    }
 
     init {
         refreshPermissionsAndConnection()

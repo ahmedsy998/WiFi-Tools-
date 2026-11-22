@@ -44,12 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import com.example.domain.SecurityReportRecord
 import com.example.presentation.components.CyberBadge
 import com.example.presentation.components.CyberPanel
 import com.example.presentation.components.CyberSectionHeader
 import com.example.presentation.components.RiskBadge
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.presentation.viewmodel.WifiToolsUiState
 import com.example.ui.theme.CrimsonBorderBright
 import com.example.ui.theme.CrimsonPanel
@@ -80,6 +82,7 @@ fun ReportsScreen(
     onPurgeAllData: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var showPurgeDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -87,17 +90,16 @@ fun ReportsScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Actions Header
         item {
             CyberPanel {
                 Text(
-                    text = "LOCAL ASSESSMENT VAULT",
+                    text = strings.vaultTitle,
                     style = MaterialTheme.typography.titleSmall,
                     color = NeonRed
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "All scan history and security assessments are stored strictly on-device in encrypted-ready local Room SQLite storage. Export via Share or Save to Files anytime.",
+                    text = strings.vaultDesc,
                     style = MaterialTheme.typography.bodySmall,
                     color = CrimsonTextMuted
                 )
@@ -110,9 +112,9 @@ fun ReportsScreen(
                             .weight(1f)
                             .testTag("reports_generate_button")
                     ) {
-                        Icon(Icons.Rounded.Assessment, contentDescription = "Generate Report", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Rounded.Assessment, contentDescription = strings.btnNewReport, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("New Report")
+                        Text(strings.btnNewReport)
                     }
                     OutlinedButton(
                         onClick = { showPurgeDialog = true },
@@ -120,19 +122,18 @@ fun ReportsScreen(
                         border = BorderStroke(1.dp, CyberCritical.copy(alpha = 0.7f)),
                         modifier = Modifier.testTag("reports_purge_all_button")
                     ) {
-                        Icon(Icons.Rounded.DeleteForever, contentDescription = "Purge All", tint = CyberCritical, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Rounded.DeleteForever, contentDescription = strings.btnPurge, tint = CyberCritical, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Purge", color = CyberCritical)
+                        Text(strings.btnPurge, color = CyberCritical)
                     }
                 }
             }
         }
 
-        // Security Assessments List
         item {
             CyberSectionHeader(
-                title = "Security & Diagnostic Reports",
-                subtitle = "${state.securityReports.size} saved assessments"
+                title = strings.sectionSavedReports,
+                subtitle = "${state.securityReports.size} ${strings.subtitleSavedReports}"
             )
         }
 
@@ -140,10 +141,10 @@ fun ReportsScreen(
             item {
                 CyberPanel {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Description, contentDescription = "No reports", tint = CrimsonTextMuted, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Rounded.Description, contentDescription = strings.sectionSavedReports, tint = CrimsonTextMuted, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "No saved reports yet. Tap 'New Report' to capture current Wi-Fi telemetry, audit findings, and router diagnostics.",
+                            text = strings.emptyNoReports,
                             style = MaterialTheme.typography.bodySmall,
                             color = CrimsonTextMuted
                         )
@@ -165,7 +166,7 @@ fun ReportsScreen(
                             Text(report.title, style = MaterialTheme.typography.titleMedium, color = PureWhite)
                             Text(
                                 SignalQualityUtils.formatTimestamp(report.timestampMs),
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(textDirection = TextDirection.Ltr),
                                 color = CrimsonTextMuted
                             )
                         }
@@ -184,32 +185,31 @@ fun ReportsScreen(
                             border = BorderStroke(1.dp, CrimsonBorderBright),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Rounded.Share, contentDescription = "Share", tint = PureWhite, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Rounded.Share, contentDescription = strings.btnShare, tint = PureWhite, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Share", color = PureWhite)
+                            Text(strings.btnShare, color = PureWhite)
                         }
                         OutlinedButton(
                             onClick = { onExportReportMarkdown(report) },
                             border = BorderStroke(1.dp, CrimsonBorderBright),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Rounded.Download, contentDescription = "Export MD", tint = CyberCyan, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Rounded.Download, contentDescription = strings.btnSaveMd, tint = CyberCyan, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(".MD", color = PureWhite)
                         }
                         IconButton(onClick = { onDeleteReport(report.id) }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Delete report", tint = CyberCritical)
+                            Icon(Icons.Rounded.Delete, contentDescription = strings.btnPurge, tint = CyberCritical)
                         }
                     }
                 }
             }
         }
 
-        // Local Scan History List
         item {
             CyberSectionHeader(
-                title = "Local Scan History",
-                subtitle = "${state.scanHistory.size} recorded RF snapshots"
+                title = strings.sectionScanHistory,
+                subtitle = "${state.scanHistory.size} ${strings.subtitleScanHistory}"
             )
         }
 
@@ -217,10 +217,10 @@ fun ReportsScreen(
             item {
                 CyberPanel {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.History, contentDescription = "No scan history", tint = CrimsonTextMuted, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Rounded.History, contentDescription = strings.sectionScanHistory, tint = CrimsonTextMuted, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "No scan snapshots stored yet. Use 'Log Scan' from the Scanner or Dashboard after scanning.",
+                            text = strings.emptyNoHistory,
                             style = MaterialTheme.typography.bodySmall,
                             color = CrimsonTextMuted
                         )
@@ -237,18 +237,18 @@ fun ReportsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "${record.totalNetworks} Access Points Logged",
+                                text = "${record.totalNetworks} ${strings.labelApsLogged}",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = PureWhite
                             )
                             Text(
                                 text = SignalQualityUtils.formatTimestamp(record.timestampMs),
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(textDirection = TextDirection.Ltr),
                                 color = CrimsonTextMuted
                             )
                         }
                         IconButton(onClick = { onDeleteScanHistory(record.id) }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Delete snapshot", tint = CyberCritical)
+                            Icon(Icons.Rounded.Delete, contentDescription = strings.btnPurge, tint = CyberCritical)
                         }
                     }
                     Spacer(modifier = Modifier.height(6.dp))
@@ -259,15 +259,15 @@ fun ReportsScreen(
                             backgroundColor = CyberGreenContainer
                         )
                         CyberBadge(
-                            text = "WEAK/WPS: ${record.openOrWeakCount}",
+                            text = "${strings.metricWeakWps}: ${record.openOrWeakCount}",
                             color = if (record.openOrWeakCount > 0) CyberCritical else CyberCyan,
                             backgroundColor = if (record.openOrWeakCount > 0) CyberCriticalContainer else CyberCyanContainer
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Strongest AP: ${record.strongestSsid} (${record.strongestRssi} dBm)" +
-                            (record.connectedSsid?.let { " • Connected: $it" } ?: ""),
+                        text = "${strings.labelStrongestAp} ${record.strongestSsid} (${record.strongestRssi} dBm)" +
+                            (record.connectedSsid?.let { " • $it" } ?: ""),
                         style = MaterialTheme.typography.bodySmall,
                         color = CrimsonTextMuted
                     )
@@ -276,7 +276,6 @@ fun ReportsScreen(
         }
     }
 
-    // Report Preview Modal Sheet
     val preview = state.selectedReportForPreview
     if (preview != null) {
         ModalBottomSheet(
@@ -305,21 +304,21 @@ fun ReportsScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = NeonRed),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Rounded.Share, contentDescription = "Share", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Share, contentDescription = strings.btnShare, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Share")
+                        Text(strings.btnShare)
                     }
                     OutlinedButton(
                         onClick = { onExportReportMarkdown(preview) },
                         border = BorderStroke(1.dp, CrimsonBorderBright)
                     ) {
-                        Text("Save .MD", color = PureWhite)
+                        Text(strings.btnSaveMd, color = PureWhite)
                     }
                     OutlinedButton(
                         onClick = { onExportReportJson(preview) },
                         border = BorderStroke(1.dp, CrimsonBorderBright)
                     ) {
-                        Text("Save .JSON", color = PureWhite)
+                        Text(strings.btnSaveJson, color = PureWhite)
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
@@ -330,7 +329,7 @@ fun ReportsScreen(
                 ) {
                     Text(
                         text = preview.fullMarkdown,
-                        style = MonoCodeStyle,
+                        style = MonoCodeStyle.copy(textDirection = TextDirection.Ltr),
                         color = PureWhite,
                         modifier = Modifier.verticalScroll(rememberScrollState())
                     )
@@ -346,8 +345,8 @@ fun ReportsScreen(
             containerColor = CrimsonPanel,
             titleContentColor = PureWhite,
             textContentColor = CrimsonTextMuted,
-            title = { Text("Purge All Local Data?") },
-            text = { Text("This permanently deletes all saved Wi-Fi scan snapshots and generated security reports from local device storage.") },
+            title = { Text(strings.dialogPurgeTitle) },
+            text = { Text(strings.dialogPurgeBody) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -356,12 +355,12 @@ fun ReportsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = CyberCritical)
                 ) {
-                    Text("Delete Everything")
+                    Text(strings.btnDeleteEverything)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPurgeDialog = false }) {
-                    Text("Cancel", color = PureWhite)
+                    Text(strings.btnCancel, color = PureWhite)
                 }
             }
         )

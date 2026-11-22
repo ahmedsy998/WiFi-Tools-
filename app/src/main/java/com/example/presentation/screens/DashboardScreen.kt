@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Router
@@ -46,6 +44,7 @@ import com.example.presentation.components.CyberPanel
 import com.example.presentation.components.CyberSectionHeader
 import com.example.presentation.components.PermissionStatusBanner
 import com.example.presentation.components.PulsingLiveDot
+import com.example.presentation.i18n.LocalAppStrings
 import com.example.presentation.viewmodel.WifiToolsUiState
 import com.example.ui.theme.CrimsonBorderBright
 import com.example.ui.theme.CrimsonTextMuted
@@ -72,6 +71,7 @@ fun DashboardScreen(
     onNavigateToTab: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val weakCount = state.discoveredNetworks.count {
         it.securityProtocol == SecurityProtocol.OPEN ||
             it.securityProtocol == SecurityProtocol.WEP_LEGACY ||
@@ -115,14 +115,14 @@ fun DashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (state.isScanning) "ACTIVE RF SWEEP" else "RF COMMAND CONSOLE",
+                                text = if (state.isScanning) strings.activeRfSweep else strings.rfCommandConsole,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = NeonRed
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (state.activeConnection.isConnectedToWifi) state.activeConnection.ssid else "Standby Mode",
+                            text = if (state.activeConnection.isConnectedToWifi) state.activeConnection.ssid else strings.standbyMode,
                             style = MaterialTheme.typography.headlineMedium,
                             color = PureWhite,
                             maxLines = 1,
@@ -131,9 +131,9 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (state.activeConnection.isConnectedToWifi) {
-                                "${state.activeConnection.band.label} • Ch ${state.activeConnection.channel} • ${state.activeConnection.rssiDbm} dBm (${SignalQualityUtils.rssiQualityLabel(state.activeConnection.rssiDbm)})"
+                                "${state.activeConnection.band.label} • Ch ${state.activeConnection.channel} • ${state.activeConnection.rssiDbm} dBm (${strings.signalQualityLabel(state.activeConnection.rssiDbm)})"
                             } else {
-                                state.activeConnection.limitationNote ?: "Connect to Wi-Fi or run a spectrum scan."
+                                strings.standbyHint
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = CrimsonTextMuted
@@ -147,11 +147,11 @@ fun DashboardScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Refresh,
-                                    contentDescription = "Scan Wi-Fi",
+                                    contentDescription = strings.btnScanRf,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(if (state.isScanning) "Scanning…" else "Scan RF")
+                                Text(if (state.isScanning) strings.btnScanning else strings.btnScanRf)
                             }
                             OutlinedButton(
                                 onClick = onSaveSnapshot,
@@ -160,7 +160,7 @@ fun DashboardScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Save,
-                                    contentDescription = "Save Snapshot",
+                                    contentDescription = strings.btnLogScan,
                                     tint = PureWhite,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -190,17 +190,17 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 CyberMetricTile(
-                    label = "Discovered APs",
+                    label = strings.metricDiscoveredAps,
                     value = state.discoveredNetworks.size.toString(),
-                    unit = "nodes",
+                    unit = strings.unitNodes,
                     accentColor = NeonRed,
                     icon = Icons.Rounded.Radar,
                     modifier = Modifier.weight(1f)
                 )
                 CyberMetricTile(
-                    label = "Weak / WPS",
+                    label = strings.metricWeakWps,
                     value = weakCount.toString(),
-                    unit = "alerts",
+                    unit = strings.unitAlerts,
                     accentColor = if (weakCount > 0) CyberCritical else CyberGreen,
                     icon = Icons.Rounded.Security,
                     modifier = Modifier.weight(1f)
@@ -214,15 +214,15 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 CyberMetricTile(
-                    label = "WPA3 Ready",
+                    label = strings.metricWpa3Ready,
                     value = wpa3Count.toString(),
-                    unit = "APs",
+                    unit = strings.unitAps,
                     accentColor = CyberGreen,
                     icon = Icons.Rounded.Wifi,
                     modifier = Modifier.weight(1f)
                 )
                 CyberMetricTile(
-                    label = "Link Speed",
+                    label = strings.metricLinkSpeed,
                     value = if (state.activeConnection.isConnectedToWifi) "${state.activeConnection.linkSpeedMbps}" else "--",
                     unit = "Mbps",
                     accentColor = CyberCyan,
@@ -235,45 +235,51 @@ fun DashboardScreen(
         // Active Interface Summary
         item {
             CyberSectionHeader(
-                title = "Active Interface Snapshot",
-                subtitle = state.lastScanTimestampMs?.let { "Last RF update: ${SignalQualityUtils.formatShortTime(it)}" }
-                    ?: "Live Android ConnectivityManager telemetry"
+                title = strings.sectionActiveInterface,
+                subtitle = state.lastScanTimestampMs?.let { "${strings.subtitleLastRfUpdate} ${SignalQualityUtils.formatShortTime(it)}" }
+                    ?: strings.subtitleLiveTelemetry
             )
             Spacer(modifier = Modifier.height(8.dp))
             CyberPanel {
-                CyberKeyValueRow("Gateway", state.activeConnection.gatewayIp ?: "Unavailable")
                 CyberKeyValueRow(
-                    "Local IP",
-                    state.activeConnection.localIpAddresses.firstOrNull() ?: "Unavailable"
+                    strings.labelGateway,
+                    state.activeConnection.gatewayIp ?: strings.valueUnavailable,
+                    forceLtrValue = state.activeConnection.gatewayIp != null
                 )
                 CyberKeyValueRow(
-                    "DNS Servers",
-                    state.activeConnection.dnsServers.joinToString(", ").ifBlank { "Unavailable" }
+                    strings.labelLocalIp,
+                    state.activeConnection.localIpAddresses.firstOrNull() ?: strings.valueUnavailable,
+                    forceLtrValue = state.activeConnection.localIpAddresses.isNotEmpty()
                 )
                 CyberKeyValueRow(
-                    "Private DNS",
+                    strings.labelDnsServers,
+                    state.activeConnection.dnsServers.joinToString(", ").ifBlank { strings.valueUnavailable },
+                    forceLtrValue = state.activeConnection.dnsServers.isNotEmpty()
+                )
+                CyberKeyValueRow(
+                    strings.labelPrivateDns,
                     if (state.activeConnection.isPrivateDnsActive) {
-                        state.activeConnection.privateDnsServerName ?: "Enabled (DoT)"
-                    } else "Plaintext UDP/53",
+                        state.activeConnection.privateDnsServerName ?: strings.valueEnabledDot
+                    } else strings.valuePlaintextDns,
                     valueColor = if (state.activeConnection.isPrivateDnsActive) CyberGreen else CyberAmber
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CyberBadge(
-                        text = if (state.activeConnection.hasValidatedInternet) "INTERNET VALIDATED" else "NO VALIDATED WAN",
+                        text = if (state.activeConnection.hasValidatedInternet) strings.badgeInternetValidated else strings.badgeNoValidatedWan,
                         color = if (state.activeConnection.hasValidatedInternet) CyberGreen else CyberAmber,
                         backgroundColor = if (state.activeConnection.hasValidatedInternet) CyberGreenContainer else CyberAmberContainer
                     )
                     if (state.activeConnection.isVpnActive) {
                         CyberBadge(
-                            text = "VPN TUNNEL",
+                            text = strings.badgeVpnTunnel,
                             color = CyberCyan,
                             backgroundColor = CyberGreenContainer
                         )
                     }
                     if (state.activeConnection.isCaptivePortal) {
                         CyberBadge(
-                            text = "CAPTIVE PORTAL",
+                            text = strings.badgeCaptivePortal,
                             color = CyberCritical,
                             backgroundColor = CyberCriticalContainer
                         )
@@ -285,23 +291,23 @@ fun DashboardScreen(
         // Quick Module Launchers
         item {
             CyberSectionHeader(
-                title = "Security & Diagnostic Modules",
-                subtitle = "Native Android APIs • Zero simulated data"
+                title = strings.sectionModules,
+                subtitle = strings.subtitleModules
             )
             Spacer(modifier = Modifier.height(8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     QuickModuleCard(
-                        title = "Network Scanner",
-                        subtitle = "SSID, BSSID, RSSI & Filters",
+                        title = strings.moduleScannerTitle,
+                        subtitle = strings.moduleScannerSub,
                         icon = Icons.Rounded.Radar,
                         tag = "quick_module_scanner",
                         onClick = { onNavigateToTab("scanner") },
                         modifier = Modifier.weight(1f)
                     )
                     QuickModuleCard(
-                        title = "Band Analyzer",
-                        subtitle = "Channel Congestion & Link",
+                        title = strings.moduleAnalyzerTitle,
+                        subtitle = strings.moduleAnalyzerSub,
                         icon = Icons.Rounded.Speed,
                         tag = "quick_module_analyzer",
                         onClick = { onNavigateToTab("analyzer") },
@@ -310,16 +316,16 @@ fun DashboardScreen(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     QuickModuleCard(
-                        title = "Security & Audit",
-                        subtitle = "WPA3, Hardening & Passwords",
+                        title = strings.moduleSecurityTitle,
+                        subtitle = strings.moduleSecuritySub,
                         icon = Icons.Rounded.Security,
                         tag = "quick_module_security",
                         onClick = { onNavigateToTab("security") },
                         modifier = Modifier.weight(1f)
                     )
                     QuickModuleCard(
-                        title = "Router & Reports",
-                        subtitle = "Latency, Loss & Export",
+                        title = strings.moduleRouterTitle,
+                        subtitle = strings.moduleRouterSub,
                         icon = Icons.Rounded.Router,
                         tag = "quick_module_router",
                         onClick = { onNavigateToTab("router") },
