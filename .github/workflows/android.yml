@@ -28,16 +28,42 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: "13114758"
-
-      - name: Accept Android SDK licenses & install required SDK packages
+      - name: Configure Android Command-Line Tools & SDK
+        shell: bash
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-          sdkmanager "platforms;android-36.1" || true
+          set -euo pipefail
+
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          mkdir -p "$SDK_ROOT/cmdline-tools"
+
+          if [ ! -x "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "Installing Android command-line tools..."
+            TMP_ZIP="/tmp/cmdline-tools.zip"
+            TMP_DIR="/tmp/cmdline-tools-extract"
+            curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip" -o "$TMP_ZIP"
+            rm -rf "$TMP_DIR" "$SDK_ROOT/cmdline-tools/latest"
+            unzip -q "$TMP_ZIP" -d "$TMP_DIR"
+            mv "$TMP_DIR/cmdline-tools" "$SDK_ROOT/cmdline-tools/latest"
+            rm -rf "$TMP_ZIP" "$TMP_DIR"
+          fi
+
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+
+          echo "Accepting Android SDK licenses..."
+          set +o pipefail
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
+          set -o pipefail
+
+          echo "Installing modern Android SDK packages (excluding obsolete 'tools')..."
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
+            "cmdline-tools;latest" \
+            "platform-tools" \
+            "platforms;android-36.1" \
+            "build-tools;36.0.0"
 
       - name: Prepare debug.keystore for debug signingConfig
         run: |
