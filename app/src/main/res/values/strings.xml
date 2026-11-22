@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WiFi Tools</string>
+    <string name="nav_dashboard">Command</string>
+    <string name="nav_scanner">Scanner</string>
+    <string name="nav_analyzer">Analyzer</string>
+    <string name="nav_security">Security</string>
+    <string name="nav_router">Router</string>
+    <string name="nav_reports">Reports</string>
+    <string name="action_scan_now">Scan Networks</string>
+    <string name="action_grant_permissions">Grant Permissions</string>
+    <string name="action_open_settings">Open Settings</string>
+    <string name="action_save_snapshot">Save Snapshot</string>
+    <string name="action_export_report">Export Report</string>
+    <string name="action_share_report">Share Findings</string>
+    <string name="action_delete_all">Purge All History</string>
+    <string name="status_scanning">Scanning RF spectrum…</string>
+    <string name="status_idle">Ready</string>
+    <string name="authorization_notice">Authorized Testing Only — Operate exclusively on networks you own or have explicit written authorization to audit.</string>
+    <string name="android_limitation_notice">Android OS Security Model: Standard non-rooted Android apps cannot enable Wi-Fi monitor mode, inject packets, recover saved Wi-Fi passphrases, or bypass WPA/WPA2/WPA3 authentication.</string>
+</resources>
